@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -10,18 +12,26 @@ public class Player : MonoBehaviour
     public Animator animator;
     public GameObject spawnPoint;
     public GameObject checkPoint;
+    public GameObject colObject;
 
     private Vector2 fallMultiplierVector;
     private bool groundCheck = true;
     private float coyotteCounter;
     private int checkpointCounter = 0;
-    
+    private int lifeCounter = 3;
+    private bool midair = false;
+
+
 
     [SerializeField] private float jumpVelocity = 3.5f;
     [SerializeField] private float movementSpeed = 1.3f;
     [SerializeField] private float fallMultiplier = 1.5f;
     [SerializeField] private float coyotteTime = 0.125f;
     [SerializeField] private float worldLowerBound = -3f;
+    [SerializeField] private Sprite emptyHearth;
+    [SerializeField] private AudioSource deathSound;
+    [SerializeField] private AudioSource footStep;
+    [SerializeField] private AudioSource jumpSound;
 
     // Initializes some values on start
     void Start()
@@ -35,21 +45,22 @@ public class Player : MonoBehaviour
     // update with every frame
     private void Update()
     {
-        deathHandler();
+        WorldBoundCheck();
         groundCheck = IsGrounded();
         MovementHandler();
         CanJump();
         AnimationHandler();
         FallGravityHandler();
+        JumpedSound();
 
 
     }
 
-    // checking tags of colliders
-    void OnTriggerEnter2D(Collider2D col)
+    // checking tags of colliders on trigger
+    void OnTriggerEnter2D(Collider2D col_trig)
     {
         // changing spawnpoint to checkpoint and removing checkopint object
-        if (col.CompareTag("Checkpoint"))
+        if (col_trig.CompareTag("Checkpoint"))
         {
             checkpointCounter++;
             checkPoint = GameObject.Find($"Checkpoint ({checkpointCounter})");
@@ -57,6 +68,26 @@ public class Player : MonoBehaviour
             Destroy(checkPoint);
         }
 
+    }
+
+    void OnCollisionEnter2D(Collision2D col)
+    {
+        colObject = col.gameObject;
+        // handling collision with enemies
+        if (colObject.CompareTag("Enemy"))
+        {
+            // if player hits enemy from above, remove enemy
+            if (colObject.transform.position.y + colObject.GetComponent<CapsuleCollider2D>().size.y < transform.position.y)
+            {
+               // Destroy(colObject);
+            }
+            // else respawn player and stop enemy movement from collision
+            else
+            {
+                colObject.GetComponent<Rigidbody2D>().velocity = new Vector2(0f, body.velocity.y);
+                Respawn();
+            }
+        }
     }
 
 
@@ -170,13 +201,45 @@ public class Player : MonoBehaviour
     }
 
     // respawns player when he dies
-    private void deathHandler()
+    private void WorldBoundCheck()
     {
         if(transform.position.y < worldLowerBound)
         {
+            Respawn();
+        }
+    }
 
+    private void Respawn()
+    {
+        deathSound.Play();
+        lifeCounter--;
+        if (lifeCounter <= 0)
+        {
+            SceneManager.LoadScene("DeathScene");
+        }
+        else
+        {
+            GameObject.Find($"HearthImage ({lifeCounter})").GetComponent<Image>().sprite = emptyHearth;
             transform.position = spawnPoint.transform.position;
             body.velocity = new Vector2(0f, 0f);
+        }
+
+    }
+    private void Footstep()
+    {
+        footStep.Play();
+    }
+
+    private void JumpedSound()
+    {
+        if(groundCheck == false)
+        {
+            midair = true;
+        }
+        else if (midair && groundCheck)
+        {
+            jumpSound.Play();
+            midair = false;
         }
     }
 }

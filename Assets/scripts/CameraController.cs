@@ -24,7 +24,7 @@ public class CameraController : MonoBehaviour
         cameraOffsetY = transform.position.y - player.transform.position.y;
 
         // check if vertical position of camera gets out of specified range
-        if (cameraOffsetY < -0.8f || cameraOffsetY > 1.2f)
+        if (cameraOffsetY < -1.5f || cameraOffsetY > 1.5f)
         {
             // sets new vertical target
             targetY = transform.position.y - cameraOffsetY;

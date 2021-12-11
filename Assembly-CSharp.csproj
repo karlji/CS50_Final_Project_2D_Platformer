@@ -53,9 +53,10 @@
     <UnityVersion>2020.3.23f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Assets\scripts\coin.cs" />
     <Compile Include="Assets\scripts\CameraController.cs" />
     <Compile Include="Assets\scripts\Player.cs" />
-    <Compile Include="Assets\scripts\coin.cs" />
+    <Compile Include="Assets\scripts\blob.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
