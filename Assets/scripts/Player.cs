@@ -20,6 +20,7 @@ public class Player : MonoBehaviour
     private int checkpointCounter = 0;
     private int lifeCounter = 3;
     private bool midair = false;
+    private bool immunity = false;
 
 
 
@@ -74,18 +75,19 @@ public class Player : MonoBehaviour
     {
         colObject = col.gameObject;
         // handling collision with enemies
-        if (colObject.CompareTag("Enemy"))
+        if (colObject.CompareTag("Enemy") && immunity == false)
         {
             // if player hits enemy from above, remove enemy
             if (colObject.transform.position.y + colObject.GetComponent<CapsuleCollider2D>().size.y < transform.position.y)
             {
-               // Destroy(colObject);
+                //colObject.GetComponent<blob>().DeathHandler();
+                colObject.GetComponent<blob>().deathSound.Play();
             }
             // else respawn player and stop enemy movement from collision
-            else
+            else if (colObject.GetComponent<blob>().isDead == false)
             {
                 colObject.GetComponent<Rigidbody2D>().velocity = new Vector2(0f, body.velocity.y);
-                Respawn();
+                StartCoroutine(Respawn());
             }
         }
     }
@@ -97,21 +99,6 @@ public class Player : MonoBehaviour
         float extraBoxHeight = 0.05f;
         Vector3 boxCastOffset = new Vector3 (.04f, 0f, 0f);
         RaycastHit2D boxcastHit = Physics2D.BoxCast(capsuleCollider2D.bounds.center, capsuleCollider2D.bounds.size - boxCastOffset, 0f, Vector2.down, extraBoxHeight, platformLayerMask);
-
-        //Color boxColor;
-        //if (boxcastHit.collider != null)
-        //{
-        //    boxColor = Color.green;
-        //}
-        //else
-        //{
-        //    boxColor = Color.red;
-        //}
-
-        //Debug.DrawRay(capsuleCollider2D.bounds.center + new Vector3(capsuleCollider2D.bounds.extents.x, 0) - (boxCastOffset / 2), Vector2.down * (capsuleCollider2D.bounds.extents.y + extraBoxHeight), boxColor);
-        //Debug.DrawRay(capsuleCollider2D.bounds.center - new Vector3(capsuleCollider2D.bounds.extents.x, 0) + (boxCastOffset / 2), Vector2.down * (capsuleCollider2D.bounds.extents.y + extraBoxHeight), boxColor);
-        //Debug.DrawRay(capsuleCollider2D.bounds.center - new Vector3(0, capsuleCollider2D.bounds.extents.y + extraBoxHeight), Vector2.right * (capsuleCollider2D.bounds.extents.x - (boxCastOffset.x/2)), boxColor);
-
         return boxcastHit.collider != null;
     }
 
@@ -168,27 +155,18 @@ public class Player : MonoBehaviour
     //handles animations
     private void AnimationHandler()
     {
-        int animationTrigger = 0;
+
         // sets trigger to running animation
         if (groundCheck && body.velocity.x != 0f && body.velocity.y > -0.1f && body.velocity.y < 0.1f)
         {
-            animationTrigger = 1;
+            animator.SetFloat("Speed", 1f);
         }
         // sets trigger to idle animation
         else
         {
-            animationTrigger = 0;
-        }
-
-        // plays animations based on trigger
-        if (animationTrigger == 1){
-            animator.SetFloat("Speed", 1f);
-            return;
-        }
-        else
-        {
             animator.SetFloat("Speed", 0f);
         }
+
     }
 
     private void FallGravityHandler()
@@ -205,31 +183,45 @@ public class Player : MonoBehaviour
     {
         if(transform.position.y < worldLowerBound)
         {
-            Respawn();
+           StartCoroutine(Respawn());
         }
     }
 
-    private void Respawn()
+    // handles player death
+    private IEnumerator Respawn()
     {
+        // plays sound, animation, waits for animation to end, changes life counter
         deathSound.Play();
+        animator.SetBool("playerDead", true);
+        immunity = true;
+        yield return new WaitForSeconds(0.35f);
         lifeCounter--;
+
+        // if player has 0 life left, restart the whole scene
         if (lifeCounter <= 0)
         {
             SceneManager.LoadScene("DeathScene");
         }
+        // if player has life left, respawn him on checkpoint, with immunity to enemies for 1s, change hearth UI
         else
         {
             GameObject.Find($"HearthImage ({lifeCounter})").GetComponent<Image>().sprite = emptyHearth;
+            animator.SetBool("playerDead", false);
             transform.position = spawnPoint.transform.position;
             body.velocity = new Vector2(0f, 0f);
+            yield return new WaitForSeconds(1f);
+            immunity = false;
         }
 
     }
+
+    // footstep audio player used in running animation
     private void Footstep()
     {
         footStep.Play();
     }
 
+    // plays jump sound on landing based on ground check
     private void JumpedSound()
     {
         if(groundCheck == false)
@@ -242,4 +234,5 @@ public class Player : MonoBehaviour
             midair = false;
         }
     }
+
 }

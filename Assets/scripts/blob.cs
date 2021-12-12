@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class blob : MonoBehaviour
 {
@@ -9,9 +10,12 @@ public class blob : MonoBehaviour
     [SerializeField] private float worldLowerBound = -3f;
     [SerializeField] private float movementSpeed = 0.5f;
     [SerializeField] public LayerMask platformLayerMask;
+    [SerializeField] public AudioSource deathSound;
+
     private bool turnCheck = true;
     private float distance;
     private float lastFlip;
+    public bool isDead = false;
 
     // initializes some variables on start
     void Start()
@@ -37,8 +41,20 @@ public class blob : MonoBehaviour
         // handling collision with other enemies
         if (col.gameObject.CompareTag("Enemy"))
         {
-            Destroy(col.gameObject);
+            DeathHandler();
         }
+    }
+    public void DeathHandler()
+    {
+        StartCoroutine(Death());
+    }
+
+    private IEnumerator Death()
+    {
+        isDead = true;
+        deathSound.Play();
+        yield return new WaitForSeconds(0.15f);
+        Destroy(gameObject);
     }
 
     private bool TurnAround()
@@ -59,9 +75,6 @@ public class blob : MonoBehaviour
             lastFlip = transform.position.x;
             if (distance > 0.1f || distance < -0.1f)
             {
-                //boxColor = Color.red;
-                //Debug.DrawRay(capsuleCollider2D.bounds.center + boxCastOffset, Vector2.down * 0.2f, boxColor);
-                //Debug.DrawRay(capsuleCollider2D.bounds.center - boxCastOffset, Vector2.down * 0.2f, boxColor);
                 return true;
             }
             else
@@ -72,9 +85,6 @@ public class blob : MonoBehaviour
         }
         else
         {
-            //boxColor = Color.green;
-            //Debug.DrawRay(capsuleCollider2D.bounds.center + boxCastOffset, Vector2.down * 0.2f, boxColor);
-            //Debug.DrawRay(capsuleCollider2D.bounds.center - boxCastOffset, Vector2.down * 0.2f, boxColor);
             return false;
         }
     }
