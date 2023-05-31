@@ -1,6 +1,6 @@
 # CS50_Final_Project_2D_Platformer
 
-![Platformania](screenshot.png)
+![Platformania](Screenshot.png)
 
 ## Description
 CS50_Final_Project_2D_Platformer is a simple 2D platformer game developed as the final project for the CS50 course. It features classic platforming mechanics and aims to provide an enjoyable gaming experience.
